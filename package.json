@@ -1,0 +1,22 @@
+{
+  "name": "chathub",
+  "version": "1.0.0",
+  "description": "A full-stack real-time chat application built with MERN stack and Socket.io.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NayanPrajpati1323/ChatHub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/NayanPrajpati1323/ChatHub/issues"
+  },
+  "homepage": "https://github.com/NayanPrajpati1323/ChatHub#readme"
+}
