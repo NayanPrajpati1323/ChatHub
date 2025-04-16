@@ -8,12 +8,14 @@ import { connectDB } from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
-import path from "path"
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Load env variables
 dotenv.config();
 const PORT = process.env.PORT || 5000;
-const __dirname = path.resolve()
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
@@ -120,20 +122,23 @@ export const getReceiverSocketId = (receiverId) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-if(process.env.NODE_ENV === "production"){
-  app.use(express.static(path.join(__dirname,"../frontend/dist")))
-
-  app.get("*",(req,res)=>{
-    res.sendFile(path.join(__dirname,"../frontend/", "dist", "index.html"))
-  })
+// Serve static files in production
+if (process.env.NODE_ENV === "production") {
+  // Get the correct path to frontend dist directory
+  const frontendDist = path.resolve(__dirname, "../../frontend/dist");
+  
+  // Serve static files
+  app.use(express.static(frontendDist));
+  
+  // Handle all other routes by serving the index.html
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
 }
 
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
-
-
-
 
 // Start server
 server.listen(PORT, () => {
