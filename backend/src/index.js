@@ -7,6 +7,7 @@ import messageRoutes from "./routes/message.routes.js";
 import { connectDB } from "./lib/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { errorHandler, notFound } from "./middleware/error.middleware.js";
 
 // Load env variables
 dotenv.config();
@@ -15,12 +16,32 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 const server = http.createServer(app);
 
+// Define allowed origins based on environment
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  // Add your production frontend URL here
+  process.env.FRONTEND_URL,
+];
+
+// Filter out undefined origins
+const validOrigins = allowedOrigins.filter(origin => origin);
+
 // Middlewares - Apply CORS before initializing Socket.io
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: function(origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (validOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -30,7 +51,15 @@ app.use(
 // Initialize Socket.io with CORS settings
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: function(origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      if (validOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST"]
   },
@@ -88,6 +117,10 @@ export const getReceiverSocketId = (receiverId) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+
+// Error handling middleware
+app.use(notFound);
+app.use(errorHandler);
 
 // Start server
 server.listen(PORT, () => {
